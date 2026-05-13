@@ -1,31 +1,34 @@
 # Oura MCP Server
 
-A Model Context Protocol (MCP) server for accessing Oura Ring data.
+A [Model Context Protocol](https://modelcontextprotocol.io/) (MCP) server for accessing [Oura Ring](https://ouraring.com/) health data.
 
-## Setup
+## Prerequisites
 
-### Prerequisites
-- Node.js (v16+)
-- Oura account
+- Node.js v18+
+- An Oura account with a Personal Access Token or OAuth2 credentials
 
-### Installation
+## Installation
+
 1. Clone the repository
-2. Run: 
-```
+2. Install dependencies and build:
+```sh
 npm install
 npm run build
 ```
+
 ## Configuration
 
 ### Obtaining Credentials
-1. Log in to [Oura Cloud Console](https://cloud.ouraring.com/)
+
+1. Log in to the [Oura Cloud Console](https://cloud.ouraring.com/)
 2. Get either:
-   - [Personal Access Token](https://cloud.ouraring.com/personal-access-tokens) (for testing)
+   - A [Personal Access Token](https://cloud.ouraring.com/personal-access-tokens) (for testing)
    - [OAuth2 Credentials](https://cloud.ouraring.com/oauth/applications) (for production)
 
 ### Environment Variables
-Create a `.env` file:
-```
+
+Create a `.env` file in the project root:
+```sh
 # Option 1: Personal Access Token
 OURA_PERSONAL_ACCESS_TOKEN=your_token
 
@@ -37,43 +40,51 @@ OURA_REDIRECT_URI=http://localhost:3000/callback
 
 ## Usage
 
-### Testing
-```
-node test.js <tool_name> <date>
-```
-Example: `node test.js get_daily_sleep 2023-05-01`
-
 ### Claude Desktop Integration
+
 Add to Claude Desktop's config (Settings → Developer → Edit Config):
 ```json
 {
-    "mcpServers": {
-        "oura": {
-            "command": "node",
-            "args": ["/absolute/path/to/oura-mcp/build/index.js"],
-            "env": {"OURA_PERSONAL_ACCESS_TOKEN": "your_token"}
-        }
+  "mcpServers": {
+    "oura": {
+      "command": "node",
+      "args": ["/absolute/path/to/oura-mcp/build/index.js"],
+      "env": { "OURA_PERSONAL_ACCESS_TOKEN": "your_token" }
     }
+  }
 }
 ```
-Restart Claude Desktop after saving. See [MCP docs](https://modelcontextprotocol.io/quickstart/user) for details.
+Restart Claude Desktop after saving. See the [MCP quickstart](https://modelcontextprotocol.io/quickstart/user) for details.
+
+### Manual Testing
+
+```sh
+node test.js <tool_name> <date>
+```
+Example: `node test.js get_daily_sleep 2025-05-01`
 
 ## Available Resources
-- `personal_info` - User profile
-- `daily_activity` - Activity summaries
-- `daily_readiness` - Readiness scores
-- `daily_sleep` - Sleep summaries
-- `sleep` - Detailed sleep data
-- `sleep_time` - Sleep timing
-- `workout` - Workout data
-- `session` - Session data
-- `daily_spo2` - SpO2 measurements
-- `rest_mode_period` - Rest periods
-- `ring_configuration` - Ring config
-- `daily_stress` - Stress metrics
-- `daily_resilience` - Resilience metrics
-- `daily_cardiovascular_age` - CV age
-- `vO2_max` - VO2 max data
+
+Resources are accessible via MCP `readResource` calls (e.g. `oura://personal_info`). Date-based resources return the last 7 days by default.
+
+| Resource | Description |
+|---|---|
+| `personal_info` | User profile |
+| `ring_configuration` | Ring configuration |
+| `daily_activity` | Daily activity summaries |
+| `daily_readiness` | Readiness scores |
+| `daily_sleep` | Sleep summaries |
+| `sleep` | Detailed sleep data |
+| `sleep_time` | Sleep timing |
+| `workout` | Workout data |
+| `session` | Session data |
+| `daily_spo2` | Blood oxygen (SpO2) measurements |
+| `rest_mode_period` | Rest mode periods |
+| `daily_stress` | Stress metrics |
+| `daily_resilience` | Resilience metrics |
+| `daily_cardiovascular_age` | Cardiovascular age |
+| `vO2_max` | VO2 max data |
 
 ## Available Tools
-For date-based resources, use tools like `get_daily_sleep` with `startDate` and `endDate` parameters (YYYY-MM-DD). 
+
+Each date-based resource has a corresponding `get_*` tool (e.g. `get_daily_sleep`) that accepts `startDate` and `endDate` parameters in `YYYY-MM-DD` format.
