@@ -5,7 +5,7 @@ A [Model Context Protocol](https://modelcontextprotocol.io/) (MCP) server for ac
 ## Prerequisites
 
 - Node.js v18+
-- An Oura account with a Personal Access Token or OAuth2 credentials
+- An Oura account with a Personal Access Token or OAuth2 access token
 
 ## Installation
 
@@ -22,8 +22,8 @@ npm run build
 
 1. Log in to the [Oura Cloud Console](https://cloud.ouraring.com/)
 2. Get either:
-   - A [Personal Access Token](https://cloud.ouraring.com/personal-access-tokens) (for testing)
-   - [OAuth2 Credentials](https://cloud.ouraring.com/oauth/applications) (for production)
+   - A [Personal Access Token](https://cloud.ouraring.com/personal-access-tokens)
+   - An OAuth2 access token, optionally with a refresh token and app credentials
 
 ### Environment Variables
 
@@ -32,10 +32,15 @@ Create a `.env` file in the project root:
 # Option 1: Personal Access Token
 OURA_PERSONAL_ACCESS_TOKEN=your_token
 
-# Option 2: OAuth2 credentials
+# Option 2: OAuth2 token
+OURA_ACCESS_TOKEN=your_access_token
+OURA_REFRESH_TOKEN=your_refresh_token
+OURA_TOKEN_EXPIRES_AT=1735689600000
 OURA_CLIENT_ID=your_client_id
 OURA_CLIENT_SECRET=your_client_secret
-OURA_REDIRECT_URI=http://localhost:3000/callback
+
+# Optional diagnostics. Logs request paths and query keys to stderr only.
+OURA_DEBUG=false
 ```
 
 ## Usage
@@ -84,7 +89,20 @@ Resources are accessible via MCP `readResource` calls (e.g. `oura://personal_inf
 | `daily_resilience` | Resilience metrics |
 | `daily_cardiovascular_age` | Cardiovascular age |
 | `vO2_max` | VO2 max data |
+| `enhanced_tag` | Enhanced tags with context, comments, and timing |
+| `tag` | Deprecated legacy tags |
+| `heartrate` | Time-series heart rate samples |
+| `ring_battery_level` | Time-series ring battery level samples |
 
 ## Available Tools
 
-Each date-based resource has a corresponding `get_*` tool (e.g. `get_daily_sleep`) that accepts `startDate` and `endDate` parameters in `YYYY-MM-DD` format.
+Each resource has a corresponding `get_*` tool (e.g. `get_daily_sleep`). Collection tools accept:
+
+- `startDate` and `endDate` in `YYYY-MM-DD` or ISO-8601 datetime format. Date-based tools default to the last 7 days when no date range or `nextToken` is provided.
+- `fields` as a comma-separated field list to reduce payload size.
+- `nextToken` to fetch the next Oura page.
+- `includeAllPages` and `maxPages` to follow pagination in one call. `maxPages` is capped at 10.
+
+Time-series tools (`get_heartrate`, `get_ring_battery_level`) accept `startDatetime`, `endDatetime`, `latest`, `fields`, `nextToken`, `includeAllPages`, and `maxPages`. They default to `latest=true` when no datetime range or `nextToken` is provided.
+
+Document endpoints are exposed as `get_<resource>_by_id` tools, for example `get_sleep_by_id` with `{ "documentId": "..." }`.
