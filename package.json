@@ -23,7 +23,10 @@
     "oura-mcp": "./build/index.js"
   },
   "scripts": {
+    "clean": "rm -rf build",
+    "prebuild": "npm run clean",
     "build": "tsc && chmod 755 build/index.js",
+    "deploy": "npm run build && flyctl deploy --app oura-mcp-jesse",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
   },
   "files": [
