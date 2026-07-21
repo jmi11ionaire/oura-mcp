@@ -1,6 +1,7 @@
 import { config as dotenvConfig } from 'dotenv';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { OuraProvider } from './provider/oura_provider.js';
+import { registerFitSyncInboxTool } from './provider/fitsync_inbox.js';
 
 dotenvConfig();
 
@@ -63,8 +64,10 @@ async function main() {
     debug: config.debug
   });
   
+  registerFitSyncInboxTool(provider.getServer());
+
   const transport = new StdioServerTransport();
-  
+
   await provider.getServer().connect(transport);
 }
 

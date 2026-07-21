@@ -11,6 +11,7 @@ import { config as dotenvConfig } from 'dotenv';
 import { createServer, IncomingMessage, ServerResponse } from 'node:http';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { OuraProvider } from './provider/oura_provider.js';
+import { registerFitSyncInboxTool } from './provider/fitsync_inbox.js';
 
 dotenvConfig();
 
@@ -64,6 +65,7 @@ async function main() {
   });
 
   const mcpServer = provider.getServer();
+  registerFitSyncInboxTool(mcpServer);
 
   const httpServer = createServer(async (req: IncomingMessage, res: ServerResponse) => {
     // Health check
