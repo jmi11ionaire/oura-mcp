@@ -65,7 +65,9 @@ const emptyInputShape: Record<string, z.ZodTypeAny> = {};
 
 const dateCollectionInputShape: Record<string, z.ZodTypeAny> = {
   startDate: dateOrDateTime.optional().describe('Inclusive start date or datetime. Defaults to 7 days ago when no date range or nextToken is provided.'),
-  endDate: dateOrDateTime.optional().describe('Exclusive end date or datetime. Defaults to today when no date range or nextToken is provided.'),
+  endDate: dateOrDateTime.optional().describe(
+    'End date or datetime. Oura semantics vary by endpoint: daily_activity, sleep, and workout are exclusive; daily_readiness, daily_sleep, daily_stress, daily_resilience, daily_cardiovascular_age, and daily_spo2 are inclusive. For sparse or unlisted endpoints, query a wider range and select the target day. Defaults to today when no date range or nextToken is provided.'
+  ),
   nextToken: nextToken.optional().describe('Pagination cursor returned by a previous Oura response.'),
   fields: fields.optional().describe('Comma-separated fields to request from Oura. Omit for all fields.'),
   includeAllPages: z.boolean().optional().describe('When true, follow next_token up to maxPages. Defaults to false.'),
