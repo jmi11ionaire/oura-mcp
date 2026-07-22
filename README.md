@@ -41,7 +41,18 @@ OURA_CLIENT_SECRET=your_client_secret
 
 # Optional diagnostics. Logs request paths and query keys to stderr only.
 OURA_DEBUG=false
+
+# Required for the remote HTTP deployment
+MCP_AUTH_TOKEN=a-random-secret-of-at-least-32-characters
+MCP_SECRET_PATH=a-separate-url-safe-secret-of-at-least-32-characters
 ```
+
+Remote deployments fail closed unless both MCP credentials are present. FitSync
+uses `POST /mcp` with the bearer token. Claude may use the separate secret-path
+URL. Query-string tokens and an open root endpoint are not supported. Oura
+tools are read-only. Jesse's deployment also keeps the separate
+`bank_inbox_entry` tool for the manual Google Sheet workflow; Amanda's Fly
+configuration disables that tool so it cannot reach Jesse's Sheet.
 
 ## Usage
 

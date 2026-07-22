@@ -1,4 +1,4 @@
-app = "oura-mcp-jesse"
+app = "oura-mcp-amanda"
 primary_region = "lax"
 
 [build]
@@ -12,4 +12,4 @@ primary_region = "lax"
 
 [env]
   PORT = "8080"
-  FITSYNC_INBOX_ENABLED = "1"
+  FITSYNC_INBOX_ENABLED = "0"

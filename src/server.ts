@@ -12,12 +12,12 @@ import { createServer, IncomingMessage, ServerResponse } from 'node:http';
 import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
 import { OuraProvider } from './provider/oura_provider.js';
 import { registerFitSyncInboxTool } from './provider/fitsync_inbox.js';
+import { isAuthorizedDirectRequest, isSecretPath, remoteAuthConfig } from './remote_auth.js';
 
 dotenvConfig();
 
 const PORT = parseInt(process.env.PORT || '3000', 10);
-const MCP_AUTH_TOKEN = process.env.MCP_AUTH_TOKEN || ''; // optional bearer token for header-based auth
-const MCP_SECRET_PATH = process.env.MCP_SECRET_PATH || ''; // secret URL path segment (for clients that can't set headers)
+const remoteAuth = remoteAuthConfig();
 
 const config = {
   auth: {
@@ -38,39 +38,14 @@ function validateConfig() {
   }
 }
 
-// ---------- Auth middleware ----------
-function checkAuth(req: IncomingMessage, res: ServerResponse): boolean {
-  if (!MCP_AUTH_TOKEN) return true; // no token configured = open
-  const authHeader = req.headers.authorization || '';
-  // Support Bearer token
-  if (authHeader === `Bearer ${MCP_AUTH_TOKEN}`) return true;
-  // Support token as query param (for clients that can't set headers)
-  const url = new URL(req.url || '/', `http://${req.headers.host}`);
-  if (url.searchParams.get('token') === MCP_AUTH_TOKEN) return true;
-  res.writeHead(401, { 'Content-Type': 'application/json' });
-  res.end(JSON.stringify({ error: 'Unauthorized' }));
-  return false;
-}
-
 // ---------- Main ----------
 async function main() {
   validateConfig();
 
-  const provider = new OuraProvider({
-    personalAccessToken: config.auth.personalAccessToken,
-    clientId: config.auth.clientId,
-    clientSecret: config.auth.clientSecret,
-    redirectUri: config.auth.redirectUri,
-    debug: config.debug,
-  });
-
-  const mcpServer = provider.getServer();
-  registerFitSyncInboxTool(mcpServer);
-
   const httpServer = createServer(async (req: IncomingMessage, res: ServerResponse) => {
     // Health check
     if (req.url === '/health' && req.method === 'GET') {
-      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
       res.end(JSON.stringify({ status: 'ok' }));
       return;
     }
@@ -81,14 +56,31 @@ async function main() {
     const parsedUrl = new URL(req.url || '/', `http://${req.headers.host}`);
     const pathname = parsedUrl.pathname;
 
-    const isDirectMcp = pathname === '/mcp' || pathname === '/';
-    const isSecretMcp = MCP_SECRET_PATH && pathname === `/${MCP_SECRET_PATH}/mcp`;
+    const isDirectMcp = pathname === '/mcp';
+    const isSecretMcp = isSecretPath(pathname, remoteAuth);
 
     if (isDirectMcp || isSecretMcp) {
       // Secret-path requests are pre-authenticated; direct requests need header auth
-      if (isDirectMcp && !checkAuth(req, res)) return;
+      if (isDirectMcp && !isAuthorizedDirectRequest(req, remoteAuth)) {
+        res.writeHead(401, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
+        res.end(JSON.stringify({ error: 'Unauthorized' }));
+        return;
+      }
 
       if (req.method === 'POST') {
+        // One MCP server per stateless HTTP request prevents concurrent calls
+        // from replacing each other's transport on the shared Server instance.
+        const provider = new OuraProvider({
+          personalAccessToken: config.auth.personalAccessToken,
+          clientId: config.auth.clientId,
+          clientSecret: config.auth.clientSecret,
+          redirectUri: config.auth.redirectUri,
+          debug: config.debug,
+        });
+        const mcpServer = provider.getServer();
+        if (process.env.FITSYNC_INBOX_ENABLED === '1') {
+          registerFitSyncInboxTool(mcpServer);
+        }
         const transport = new StreamableHTTPServerTransport({
           sessionIdGenerator: undefined, // stateless mode
         });
@@ -99,21 +91,20 @@ async function main() {
         return;
       }
 
-      res.writeHead(405, { 'Content-Type': 'application/json' });
+      res.writeHead(405, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
       res.end(JSON.stringify({ error: 'Method not allowed. Use POST for MCP requests.' }));
       return;
     }
 
     // 404 for everything else
-    res.writeHead(404, { 'Content-Type': 'application/json' });
+    res.writeHead(404, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
     res.end(JSON.stringify({ error: 'Not found' }));
   });
 
-  const secretUrl = MCP_SECRET_PATH ? `/${MCP_SECRET_PATH}/mcp` : '(not configured)';
   httpServer.listen(PORT, '0.0.0.0', () => {
     console.error(`🟢 Oura MCP server listening on http://0.0.0.0:${PORT}`);
     console.error(`   MCP endpoint: POST /mcp (Bearer auth)`);
-    console.error(`   Secret endpoint: POST ${secretUrl} (no auth header needed)`);
+    console.error('   Secret endpoint: configured for Claude connection');
     console.error(`   Health check: GET /health`);
   });
 }

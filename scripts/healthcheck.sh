@@ -15,7 +15,7 @@
 #   OURA_PAT   Oura personal access token. Falls back to .env if unset.
 #   MCP_URL    Full remote MCP endpoint incl. secret path. Optional.
 #   FITSYNC_URL  FitSync web app exec URL. Optional.
-#   EXPECT_TOOLS Expected tool count (default 35).
+#   EXPECT_TOOLS Expected read-only Oura tool count (default 35).
 #
 # Exits non-zero if any check fails. Skipped checks do not fail the run.
 

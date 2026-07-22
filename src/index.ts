@@ -27,7 +27,7 @@ const config = {
 
 function validateConfig() {
   const { personalAccessToken, accessToken, refreshToken, clientId, clientSecret } = config.auth;
-  
+
   if (personalAccessToken || accessToken) {
     return;
   }
@@ -63,7 +63,7 @@ async function main() {
     redirectUri: config.auth.redirectUri,
     debug: config.debug
   });
-  
+
   registerFitSyncInboxTool(provider.getServer());
 
   const transport = new StdioServerTransport();
