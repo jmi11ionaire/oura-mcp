@@ -1,0 +1,83 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# A newer push to the same branch makes an in-flight run obsolete.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Matches the Node image in the Dockerfile, so CI tests what production runs.
+  NODE_VERSION: 24
+
+jobs:
+  checks:
+    name: Checks
+    # Pin the image so OS upgrades are deliberate and testable.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - run: npm ci --no-audit --no-fund
+
+      - name: Build
+        run: npm run build
+
+      - name: Test
+        run: npm test
+
+  image:
+    name: Production image
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - run: npm ci --no-audit --no-fund
+
+      # The Dockerfile copies the compiled build/ folder, the same way npm run deploy
+      # builds before fly deploy, so compile first.
+      - name: Build
+        run: npm run build
+
+      - name: Build the production image
+        run: docker build -t oura-mcp:ci .
+
+  required:
+    name: CI required
+    # The one check the ruleset requires. It passes only when every job above did,
+    # so adding a job never means editing the ruleset.
+    if: ${{ always() }}
+    needs: [checks, image]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 2
+    steps:
+      - name: Require every job to pass
+        env:
+          RESULTS: ${{ join(needs.*.result, ' ') }}
+        run: |
+          for result in $RESULTS; do
+            if [ "$result" != success ]; then
+              echo "A required job finished with: $result"
+              exit 1
+            fi
+          done
