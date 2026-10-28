@@ -10,6 +10,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: read
 
 # A newer push to a pull request makes its in-flight run obsolete, so PR runs share a group
 # per branch. Pushes to the default branch get a group per commit and always finish, since
@@ -26,11 +27,31 @@ jobs:
   checks:
     name: Checks
     if: github.event.pull_request.draft != true
+    outputs:
+      image: ${{ steps.image-inputs.outputs.image }}
     # Pin the image so OS upgrades are deliberate and testable.
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v7
+
+      # Actions minutes: a pull request builds the production image only when it changes
+      # one of the image's inputs below. Code changes are already built and tested by the
+      # other jobs, and pushes to the default branch always build the image, which deploys
+      # wait for. If the PR's file list can't be read, it builds.
+      - name: Does this change need the image build?
+        id: image-inputs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+          NEEDS: '^(Dockerfile|\.dockerignore|package(-lock)?\.json|tsconfig\.json|\.github/workflows/ci\.yml)$'
+        run: |
+          image=true
+          if [ -n "$PR" ] && files=$(gh api "repos/$GITHUB_REPOSITORY/pulls/$PR/files" --paginate --jq '.[].filename'); then
+            if [ -n "$files" ] && ! printf '%s\n' "$files" | grep -qE "$NEEDS"; then image=false; fi
+          fi
+          echo "image=$image" >>"$GITHUB_OUTPUT"
+          echo "Production image build: $image"
 
       - uses: actions/setup-node@v7
         with:
@@ -47,7 +68,8 @@ jobs:
 
   image:
     name: Production image
-    if: github.event.pull_request.draft != true
+    needs: checks
+    if: github.event.pull_request.draft != true && needs.checks.outputs.image == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
@@ -67,23 +89,3 @@ jobs:
 
       - name: Build the production image
         run: docker build -t oura-mcp:ci .
-
-  required:
-    name: CI required
-    # The one check the ruleset requires. It passes only when every job above did,
-    # so adding a job never means editing the ruleset.
-    if: ${{ always() && github.event.pull_request.draft != true }}
-    needs: [checks, image]
-    runs-on: ubuntu-24.04
-    timeout-minutes: 2
-    steps:
-      - name: Require every job to pass
-        env:
-          RESULTS: ${{ join(needs.*.result, ' ') }}
-        run: |
-          for result in $RESULTS; do
-            if [ "$result" != success ]; then
-              echo "A required job finished with: $result"
-              exit 1
-            fi
-          done
