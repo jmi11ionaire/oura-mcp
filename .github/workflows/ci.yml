@@ -2,6 +2,8 @@ name: CI
 
 on:
   pull_request:
+    # Draft PRs skip CI to save Actions minutes; marking one ready runs it.
+    types: [opened, synchronize, reopened, ready_for_review]
   push:
     branches: [master]
   workflow_dispatch:
@@ -23,6 +25,7 @@ env:
 jobs:
   checks:
     name: Checks
+    if: github.event.pull_request.draft != true
     # Pin the image so OS upgrades are deliberate and testable.
     runs-on: ubuntu-24.04
     timeout-minutes: 15
@@ -44,6 +47,7 @@ jobs:
 
   image:
     name: Production image
+    if: github.event.pull_request.draft != true
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
@@ -68,7 +72,7 @@ jobs:
     name: CI required
     # The one check the ruleset requires. It passes only when every job above did,
     # so adding a job never means editing the ruleset.
-    if: ${{ always() }}
+    if: ${{ always() && github.event.pull_request.draft != true }}
     needs: [checks, image]
     runs-on: ubuntu-24.04
     timeout-minutes: 2
