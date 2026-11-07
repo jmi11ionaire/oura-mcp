@@ -9,6 +9,11 @@ RUN npm ci --omit=dev
 # Copy built JS
 COPY build/ ./build/
 
+# Commit the image was built from; /health reports it as version.
+# Deploys pass it with --build-arg COMMIT_SHA=$(git rev-parse HEAD).
+ARG COMMIT_SHA=unknown
+ENV COMMIT_SHA=$COMMIT_SHA
+
 # The server listens on PORT (Fly injects this)
 ENV PORT=8080
 EXPOSE 8080
