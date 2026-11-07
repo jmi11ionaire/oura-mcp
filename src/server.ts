@@ -13,6 +13,7 @@ import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/
 import { OuraProvider } from './provider/oura_provider.js';
 import { registerFitSyncInboxTool } from './provider/fitsync_inbox.js';
 import { isAuthorizedDirectRequest, isSecretPath, remoteAuthConfig } from './remote_auth.js';
+import { healthBody } from './health.js';
 
 dotenvConfig();
 
@@ -46,7 +47,7 @@ async function main() {
     // Health check
     if (req.url === '/health' && req.method === 'GET') {
       res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
-      res.end(JSON.stringify({ status: 'ok' }));
+      res.end(JSON.stringify(healthBody()));
       return;
     }
 
