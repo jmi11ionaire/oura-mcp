@@ -9,7 +9,6 @@ export interface OuraConfig {
   tokenExpiresAt?: number;
   clientId?: string;
   clientSecret?: string;
-  redirectUri?: string;
   debug?: boolean;
 }
 
@@ -132,7 +131,6 @@ export class OuraProvider {
       expiresAt: config.tokenExpiresAt,
       clientId: config.clientId,
       clientSecret: config.clientSecret,
-      redirectUri: config.redirectUri,
     });
     this.debug = Boolean(config.debug);
 

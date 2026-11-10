@@ -25,7 +25,6 @@ const config = {
     personalAccessToken: process.env.OURA_PERSONAL_ACCESS_TOKEN || '',
     clientId: process.env.OURA_CLIENT_ID || '',
     clientSecret: process.env.OURA_CLIENT_SECRET || '',
-    redirectUri: process.env.OURA_REDIRECT_URI || 'http://localhost:3000/callback',
   },
   debug: process.env.OURA_MCP_DEBUG === '1',
 };
@@ -75,7 +74,6 @@ async function main() {
           personalAccessToken: config.auth.personalAccessToken,
           clientId: config.auth.clientId,
           clientSecret: config.auth.clientSecret,
-          redirectUri: config.auth.redirectUri,
           debug: config.debug,
         });
         const mcpServer = provider.getServer();
