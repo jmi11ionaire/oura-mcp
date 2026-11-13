@@ -14,6 +14,10 @@ COPY build/ ./build/
 ARG COMMIT_SHA=unknown
 ENV COMMIT_SHA=$COMMIT_SHA
 
+# Run as the unprivileged user the node image provides. There is no volume, and
+# /app is root-owned but world-readable, which is all the server needs.
+USER node
+
 # The server listens on PORT (Fly injects this)
 ENV PORT=8080
 EXPOSE 8080
