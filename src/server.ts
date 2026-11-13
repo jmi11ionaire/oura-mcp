@@ -8,12 +8,8 @@
  */
 
 import { config as dotenvConfig } from 'dotenv';
-import { createServer, IncomingMessage, ServerResponse } from 'node:http';
-import { StreamableHTTPServerTransport } from '@modelcontextprotocol/sdk/server/streamableHttp.js';
-import { OuraProvider } from './provider/oura_provider.js';
-import { registerFitSyncInboxTool } from './provider/fitsync_inbox.js';
-import { isAuthorizedDirectRequest, isSecretPath, remoteAuthConfig } from './remote_auth.js';
-import { healthBody } from './health.js';
+import { remoteAuthConfig } from './remote_auth.js';
+import { createHttpServer } from './http_server.js';
 
 dotenvConfig();
 
@@ -42,63 +38,7 @@ function validateConfig() {
 async function main() {
   validateConfig();
 
-  const httpServer = createServer(async (req: IncomingMessage, res: ServerResponse) => {
-    // Health check
-    if (req.url === '/health' && req.method === 'GET') {
-      res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
-      res.end(JSON.stringify(healthBody()));
-      return;
-    }
-
-    // MCP endpoint — matches:
-    //   /mcp              (requires Bearer token header)
-    //   /<secret>/mcp     (secret path = auth, no header needed — for Claude.ai connector)
-    const parsedUrl = new URL(req.url || '/', `http://${req.headers.host}`);
-    const pathname = parsedUrl.pathname;
-
-    const isDirectMcp = pathname === '/mcp';
-    const isSecretMcp = isSecretPath(pathname, remoteAuth);
-
-    if (isDirectMcp || isSecretMcp) {
-      // Secret-path requests are pre-authenticated; direct requests need header auth
-      if (isDirectMcp && !isAuthorizedDirectRequest(req, remoteAuth)) {
-        res.writeHead(401, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
-        res.end(JSON.stringify({ error: 'Unauthorized' }));
-        return;
-      }
-
-      if (req.method === 'POST') {
-        // One MCP server per stateless HTTP request prevents concurrent calls
-        // from replacing each other's transport on the shared Server instance.
-        const provider = new OuraProvider({
-          personalAccessToken: config.auth.personalAccessToken,
-          clientId: config.auth.clientId,
-          clientSecret: config.auth.clientSecret,
-          debug: config.debug,
-        });
-        const mcpServer = provider.getServer();
-        if (process.env.FITSYNC_INBOX_ENABLED === '1') {
-          registerFitSyncInboxTool(mcpServer);
-        }
-        const transport = new StreamableHTTPServerTransport({
-          sessionIdGenerator: undefined, // stateless mode
-        });
-
-        await mcpServer.connect(transport);
-        await transport.handleRequest(req, res);
-        transport.close();
-        return;
-      }
-
-      res.writeHead(405, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
-      res.end(JSON.stringify({ error: 'Method not allowed. Use POST for MCP requests.' }));
-      return;
-    }
-
-    // 404 for everything else
-    res.writeHead(404, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
-    res.end(JSON.stringify({ error: 'Not found' }));
-  });
+  const httpServer = createHttpServer({ remoteAuth, config });
 
   httpServer.listen(PORT, '0.0.0.0', () => {
     console.error(`🟢 Oura MCP server listening on http://0.0.0.0:${PORT}`);
