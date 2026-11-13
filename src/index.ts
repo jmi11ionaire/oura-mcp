@@ -6,23 +6,15 @@ import { registerFitSyncInboxTool } from './provider/fitsync_inbox.js';
 dotenvConfig();
 
 const config = {
-  api: {
-    baseUrl: 'https://api.ouraring.com/v2',
-  },
   auth: {
     personalAccessToken: process.env.OURA_PERSONAL_ACCESS_TOKEN || '',
     accessToken: process.env.OURA_ACCESS_TOKEN || '',
     refreshToken: process.env.OURA_REFRESH_TOKEN || '',
     tokenExpiresAt: parseOptionalNumber(process.env.OURA_TOKEN_EXPIRES_AT),
     clientId: process.env.OURA_CLIENT_ID || '',
-    clientSecret: process.env.OURA_CLIENT_SECRET || '',
-    redirectUri: process.env.OURA_REDIRECT_URI || 'http://localhost:3000/callback'
+    clientSecret: process.env.OURA_CLIENT_SECRET || ''
   },
-  debug: process.env.OURA_DEBUG === 'true',
-  server: {
-    name: 'oura-provider',
-    version: '1.0.0'
-  }
+  debug: process.env.OURA_DEBUG === 'true'
 };
 
 function validateConfig() {
@@ -49,10 +41,8 @@ function parseOptionalNumber(value: string | undefined): number | undefined {
 }
 
 async function main() {
-  // Validate configuration
   validateConfig();
 
-  // Create and initialize the provider
   const provider = new OuraProvider({
     personalAccessToken: config.auth.personalAccessToken,
     accessToken: config.auth.accessToken,
@@ -60,7 +50,6 @@ async function main() {
     tokenExpiresAt: config.auth.tokenExpiresAt,
     clientId: config.auth.clientId,
     clientSecret: config.auth.clientSecret,
-    redirectUri: config.auth.redirectUri,
     debug: config.debug
   });
 

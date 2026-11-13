@@ -8,7 +8,6 @@ export interface OuraAuthConfig extends OuraTokens {
   personalAccessToken?: string;
   clientId?: string;
   clientSecret?: string;
-  redirectUri?: string;
 }
 
 export class OuraAuth {
