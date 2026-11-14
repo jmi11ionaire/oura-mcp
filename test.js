@@ -7,7 +7,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 async function main() {
-  // Get command line arguments
   const [toolName, date] = process.argv.slice(2);
   
   if (!toolName || !date) {
@@ -17,7 +16,6 @@ async function main() {
 
   const serverPath = join(__dirname, 'build/index.js');
   
-  // Create MCP client
   const transport = new StdioClientTransport({
     command: '/opt/homebrew/bin/node',
     args: [serverPath],
@@ -51,7 +49,6 @@ async function main() {
     const tools = await client.listTools();
     console.log('Available tools:', tools);
 
-    // Test various resources
     const resourceTests = [
       'personal_info',
       'daily_activity',
@@ -67,7 +64,6 @@ async function main() {
       console.log(`${resource} data:`, data);
     }
 
-    // Call the specified tool with the given date
     console.log(`\nCalling ${toolName}...`);
     const data = await client.callTool({
       name: toolName,

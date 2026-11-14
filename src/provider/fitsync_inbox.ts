@@ -18,7 +18,7 @@ import { z } from 'zod';
 const DEFAULT_INBOX_URL =
   'https://script.google.com/macros/s/AKfycbxYnJl2e0sO8Hp7CrxVC5NjwOpJQCh-jOCAm0UsNvpkQYDYMcmbJEPmAYMmD2Dn4bspqg/exec';
 
-export interface BankInboxParams {
+interface BankInboxParams {
   text: string;
   date: string;
   entryId: string;
@@ -32,7 +32,7 @@ export interface BankInboxParams {
  * curl -L), so follow it manually: the write is processed before the
  * redirect, and the Location target is fetched with a plain GET.
  */
-export async function postInboxEntry(
+async function postInboxEntry(
   params: BankInboxParams,
   endpointUrl: string = process.env.FITSYNC_INBOX_URL || DEFAULT_INBOX_URL,
   inboxToken: string = process.env.FITSYNC_INBOX_TOKEN || '',
