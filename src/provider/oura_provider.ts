@@ -2,7 +2,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
 import { OuraAuth } from './oura_connection.js';
 
-export interface OuraConfig {
+interface OuraConfig {
   personalAccessToken?: string;
   accessToken?: string;
   refreshToken?: string;
