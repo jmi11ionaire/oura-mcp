@@ -2,11 +2,9 @@ FROM node:24-slim
 
 WORKDIR /app
 
-# Copy package files and install deps
 COPY package.json package-lock.json* ./
 RUN npm ci --omit=dev
 
-# Copy built JS
 COPY build/ ./build/
 
 # Commit the image was built from; /health reports it as version.

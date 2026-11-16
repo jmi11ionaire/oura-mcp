@@ -34,7 +34,6 @@ function validateConfig() {
   }
 }
 
-// ---------- Main ----------
 async function main() {
   validateConfig();
 

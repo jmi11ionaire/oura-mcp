@@ -5,7 +5,7 @@ import { registerFitSyncInboxTool } from './provider/fitsync_inbox.js';
 import { isAuthorizedDirectRequest, isSecretPath, RemoteAuthConfig } from './remote_auth.js';
 import { healthBody } from './health.js';
 
-export type HttpServerOptions = {
+type HttpServerOptions = {
   remoteAuth: RemoteAuthConfig;
   config: {
     auth: { personalAccessToken: string; clientId: string; clientSecret: string };
@@ -37,7 +37,6 @@ export function createHttpServer(options: HttpServerOptions): Server {
 }
 
 async function handleRequest(req: IncomingMessage, res: ServerResponse, options: HttpServerOptions): Promise<void> {
-  // Health check
   if (req.url === '/health' && req.method === 'GET') {
     res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
     res.end(JSON.stringify(healthBody()));
@@ -80,7 +79,7 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse, options:
         registerFitSyncInboxTool(mcpServer);
       }
       const transport = new StreamableHTTPServerTransport({
-        sessionIdGenerator: undefined, // stateless mode
+        sessionIdGenerator: undefined,
       });
 
       await mcpServer.connect(transport);
@@ -94,7 +93,6 @@ async function handleRequest(req: IncomingMessage, res: ServerResponse, options:
     return;
   }
 
-  // 404 for everything else
   res.writeHead(404, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
   res.end(JSON.stringify({ error: 'Not found' }));
 }

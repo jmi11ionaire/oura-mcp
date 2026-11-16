@@ -1,10 +1,10 @@
-export interface OuraTokens {
+interface OuraTokens {
   accessToken?: string;
   refreshToken?: string;
   expiresAt?: number;
 }
 
-export interface OuraAuthConfig extends OuraTokens {
+interface OuraAuthConfig extends OuraTokens {
   personalAccessToken?: string;
   clientId?: string;
   clientSecret?: string;
