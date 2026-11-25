@@ -76,24 +76,6 @@ async function postInboxEntry(
   return text;
 }
 
-type ToolArgs = Record<string, unknown>;
-type JsonToolResult = { content: Array<{ type: 'text'; text: string }> };
-type JsonToolRegistrar = {
-  registerTool: (
-    name: string,
-    config: {
-      description: string;
-      inputSchema: Record<string, z.ZodTypeAny>;
-      annotations: {
-        readOnlyHint: boolean;
-        destructiveHint: boolean;
-        idempotentHint: boolean;
-      };
-    },
-    handler: (args: ToolArgs) => Promise<JsonToolResult>,
-  ) => void;
-};
-
 const inboxInputShape: Record<string, z.ZodTypeAny> = {
   text: z.string().min(1).max(2000).describe(
     'Raw food/activity description including estimated macros, e.g. "tuna sandwich, chips (620 cal, 32p/55c/28f/900mg)". Stored verbatim; parsed at closeout, never here.',
@@ -113,9 +95,7 @@ const inboxInputShape: Record<string, z.ZodTypeAny> = {
 };
 
 export function registerFitSyncInboxTool(server: McpServer): void {
-  const registrar = server as unknown as JsonToolRegistrar;
-
-  registrar.registerTool(
+  server.registerTool(
     'bank_inbox_entry',
     {
       description:

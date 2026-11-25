@@ -13,7 +13,6 @@ interface OuraConfig {
 }
 
 type EndpointKind = 'singleton' | 'collection' | 'timeSeries';
-type JsonToolResult = { content: Array<{ type: 'text'; text: string }> };
 
 interface EndpointDefinition {
   name: string;
@@ -25,21 +24,6 @@ interface EndpointDefinition {
 
 type ToolArgs = Record<string, unknown>;
 type QueryParams = Record<string, string | boolean | number | undefined>;
-type JsonToolRegistrar = {
-  registerTool: (
-    name: string,
-    config: {
-      description: string;
-      inputSchema: Record<string, z.ZodTypeAny>;
-      annotations: {
-        readOnlyHint: boolean;
-        destructiveHint: boolean;
-        idempotentHint: boolean;
-      };
-    },
-    handler: (args: ToolArgs) => Promise<JsonToolResult>,
-  ) => void;
-};
 
 const DATE_OR_DATE_TIME_PATTERN =
   /^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})?)?$/;
@@ -285,9 +269,7 @@ export class OuraProvider {
     inputSchema: Record<string, z.ZodTypeAny>,
     handler: (args: ToolArgs) => Promise<unknown>,
   ): void {
-    const server = this.server as unknown as JsonToolRegistrar;
-
-    server.registerTool(
+    this.server.registerTool(
       name,
       {
         description,
