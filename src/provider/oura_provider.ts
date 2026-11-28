@@ -18,7 +18,6 @@ interface EndpointDefinition {
   name: string;
   description: string;
   kind: EndpointKind;
-  supportsDocument?: boolean;
   defaultDays?: number;
 }
 
@@ -80,22 +79,22 @@ const documentInputShape: Record<string, z.ZodTypeAny> = {
 
 const endpoints: EndpointDefinition[] = [
   { name: 'personal_info', description: 'User profile', kind: 'singleton' },
-  { name: 'ring_configuration', description: 'Ring configuration', kind: 'collection', supportsDocument: true },
-  { name: 'daily_activity', description: 'Daily activity summaries', kind: 'collection', supportsDocument: true, defaultDays: 7 },
-  { name: 'daily_readiness', description: 'Readiness scores', kind: 'collection', supportsDocument: true, defaultDays: 7 },
-  { name: 'daily_sleep', description: 'Sleep summaries', kind: 'collection', supportsDocument: true, defaultDays: 7 },
-  { name: 'sleep', description: 'Detailed sleep data', kind: 'collection', supportsDocument: true, defaultDays: 7 },
-  { name: 'sleep_time', description: 'Sleep timing', kind: 'collection', supportsDocument: true, defaultDays: 7 },
-  { name: 'workout', description: 'Workout data', kind: 'collection', supportsDocument: true, defaultDays: 7 },
-  { name: 'session', description: 'Session data', kind: 'collection', supportsDocument: true, defaultDays: 7 },
-  { name: 'daily_spo2', description: 'Blood oxygen SpO2 measurements', kind: 'collection', supportsDocument: true, defaultDays: 7 },
-  { name: 'rest_mode_period', description: 'Rest mode periods', kind: 'collection', supportsDocument: true, defaultDays: 7 },
-  { name: 'daily_stress', description: 'Stress metrics', kind: 'collection', supportsDocument: true, defaultDays: 7 },
-  { name: 'daily_resilience', description: 'Resilience metrics', kind: 'collection', supportsDocument: true, defaultDays: 7 },
-  { name: 'daily_cardiovascular_age', description: 'Cardiovascular age', kind: 'collection', supportsDocument: true, defaultDays: 7 },
-  { name: 'vO2_max', description: 'VO2 max data', kind: 'collection', supportsDocument: true, defaultDays: 7 },
-  { name: 'enhanced_tag', description: 'Enhanced tags with context, comments, and timing', kind: 'collection', supportsDocument: true, defaultDays: 7 },
-  { name: 'tag', description: 'Deprecated legacy tags. Prefer enhanced_tag when available.', kind: 'collection', supportsDocument: true, defaultDays: 7 },
+  { name: 'ring_configuration', description: 'Ring configuration', kind: 'collection' },
+  { name: 'daily_activity', description: 'Daily activity summaries', kind: 'collection', defaultDays: 7 },
+  { name: 'daily_readiness', description: 'Readiness scores', kind: 'collection', defaultDays: 7 },
+  { name: 'daily_sleep', description: 'Sleep summaries', kind: 'collection', defaultDays: 7 },
+  { name: 'sleep', description: 'Detailed sleep data', kind: 'collection', defaultDays: 7 },
+  { name: 'sleep_time', description: 'Sleep timing', kind: 'collection', defaultDays: 7 },
+  { name: 'workout', description: 'Workout data', kind: 'collection', defaultDays: 7 },
+  { name: 'session', description: 'Session data', kind: 'collection', defaultDays: 7 },
+  { name: 'daily_spo2', description: 'Blood oxygen SpO2 measurements', kind: 'collection', defaultDays: 7 },
+  { name: 'rest_mode_period', description: 'Rest mode periods', kind: 'collection', defaultDays: 7 },
+  { name: 'daily_stress', description: 'Stress metrics', kind: 'collection', defaultDays: 7 },
+  { name: 'daily_resilience', description: 'Resilience metrics', kind: 'collection', defaultDays: 7 },
+  { name: 'daily_cardiovascular_age', description: 'Cardiovascular age', kind: 'collection', defaultDays: 7 },
+  { name: 'vO2_max', description: 'VO2 max data', kind: 'collection', defaultDays: 7 },
+  { name: 'enhanced_tag', description: 'Enhanced tags with context, comments, and timing', kind: 'collection', defaultDays: 7 },
+  { name: 'tag', description: 'Deprecated legacy tags. Prefer enhanced_tag when available.', kind: 'collection', defaultDays: 7 },
   { name: 'heartrate', description: 'Time-series heart rate samples', kind: 'timeSeries' },
   { name: 'ring_battery_level', description: 'Time-series ring battery level samples', kind: 'timeSeries' },
 ];
@@ -252,7 +251,7 @@ export class OuraProvider {
       });
 
     endpoints
-      .filter((endpoint) => endpoint.supportsDocument)
+      .filter((endpoint) => endpoint.kind === 'collection')
       .forEach((endpoint) => {
         this.registerJsonTool(
           `get_${endpoint.name}_by_id`,
